@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.components.ModelmapperInstance;
@@ -13,9 +12,13 @@ import com.ecommerce.dtos.AuthenticationRequestDto;
 import com.ecommerce.dtos.AuthenticationResponseDto;
 import com.ecommerce.dtos.ClienteRequestDto;
 import com.ecommerce.dtos.ClienteResponseDto;
+import com.ecommerce.helpers.ClienteEmailHelper;
 import com.ecommerce.models.Cliente;
+import com.ecommerce.producers.EmailMessageProducer;
 import com.ecommerce.repositories.IClienteRepository;
 import com.ecommerce.security.TokenAuthenticationService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +31,10 @@ public class ClienteService {
 	private final ModelmapperInstance mapper;
 
 	private final TokenAuthenticationService tokenService;
+	
+	private final EmailMessageProducer emailMessageProducer;
+	
+	private final ObjectMapper objectMapper;
 
 	public ClienteResponseDto save(ClienteRequestDto dto) {
 
@@ -39,7 +46,9 @@ public class ClienteService {
 		cliente.atualizaDatas();
 
 		this.clienteRepository.save(cliente);
-
+		
+		this.sendMessageBroker(cliente);
+		
 		return ClienteResponseDto.response(cliente, "Cadastro realizado com sucesso.");
 
 	}
@@ -53,7 +62,16 @@ public class ClienteService {
 		if (clienteRepository.findByTelefone(telefone).isPresent())
 			throw new IllegalArgumentException("Telefone já cadastrado, tente outro.");
 	}
-
+	
+	private void sendMessageBroker(Cliente cliente) {
+		try {
+			this.emailMessageProducer.send(this.objectMapper
+					.writeValueAsString(ClienteEmailHelper.gerarMensagemCriacaoConta(cliente)));
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static String getHashMd5(String value) {
 		MessageDigest md;
 		try {
