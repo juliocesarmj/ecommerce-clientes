@@ -1,3 +1,3 @@
 # ecommerce-clientes
 Cadastro de clientes com serviço de email de boas vindas utilizando fila de mensageria com Apache kafka(Producer).
-O consumer está configurado no projeto 
+O consumer está configurado no projeto -> https://github.com/juliocesarmj/ecommerce-emailMessage-consumer
